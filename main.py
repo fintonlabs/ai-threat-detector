@@ -1,53 +1,60 @@
-import os
-from flask import Flask, request, jsonify
-from flask_sqlalchemy import SQLAlchemy
-from flask_migrate import Migrate
-from flask_oauthlib.provider import OAuth2Provider
-from sklearn.ensemble import IsolationForest
 import pandas as pd
-import numpy as np
-import pcapkit
+from scapy.all import rdpcap
 
-# Initialize Flask app
-app = Flask(__name__)
+class DataProcessor:
+    """
+    A class used to process network traffic data from different file formats.
+    """
 
-# Configure PostgreSQL database
-app.config['SQLALCHEMY_DATABASE_URI'] = 'postgresql://user:password@localhost/dbname'
-app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
+    @staticmethod
+    def from_pcap(file_path: str) -> pd.DataFrame:
+        """
+        Reads network traffic data from a PCAP file and returns a DataFrame.
 
-# Initialize SQLAlchemy, Migrate and OAuth2Provider
-db = SQLAlchemy(app)
-migrate = Migrate(app, db)
-oauth = OAuth2Provider(app)
+        Parameters:
+        file_path (str): The path to the PCAP file.
 
-# Define models
-class Analysis(db.Model):
-    # ...
+        Returns:
+        pd.DataFrame: A DataFrame containing the network traffic data.
+        """
+        packets = rdpcap(file_path)
+        data = []
 
-class Threat(db.Model):
-    # ...
+        for packet in packets:
+            row = {
+                'src_ip': packet[IP].src,
+                'dst_ip': packet[IP].dst,
+                'src_port': packet[TCP].sport,
+                'dst_port': packet[TCP].dport,
+                'protocol': packet[IP].proto,
+                'payload': packet[TCP].payload
+            }
+            data.append(row)
 
-# Define OAuth2Provider
-class MyOAuth2Provider(OAuth2Provider):
-    # ...
+        return pd.DataFrame(data)
 
-# Define API endpoints
-@app.route('/start', methods=['POST'])
-def start_analysis():
-    # ...
+    @staticmethod
+    def from_csv(file_path: str) -> pd.DataFrame:
+        """
+        Reads network traffic data from a CSV file and returns a DataFrame.
 
-@app.route('/stop', methods=['POST'])
-def stop_analysis():
-    # ...
+        Parameters:
+        file_path (str): The path to the CSV file.
 
-@app.route('/status', methods=['GET'])
-def get_status():
-    # ...
+        Returns:
+        pd.DataFrame: A DataFrame containing the network traffic data.
+        """
+        return pd.read_csv(file_path)
 
-@app.route('/results', methods=['GET'])
-def get_results():
-    # ...
+    @staticmethod
+    def from_json(file_path: str) -> pd.DataFrame:
+        """
+        Reads network traffic data from a JSON file and returns a DataFrame.
 
-# Run the app
-if __name__ == '__main__':
-    app.run(debug=True)
+        Parameters:
+        file_path (str): The path to the JSON file.
+
+        Returns:
+        pd.DataFrame: A DataFrame containing the network traffic data.
+        """
+        return pd.read_json(file_path)

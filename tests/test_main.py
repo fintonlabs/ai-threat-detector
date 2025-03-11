@@ -1,30 +1,14 @@
-import unittest
-from main import app, db, Analysis, Threat
+import pandas as pd
+from data_processor import DataProcessor
 
-class MainTestCase(unittest.TestCase):
-    def setUp(self):
-        self.client = app.test_client()
-        db.create_all()
+def test_from_pcap():
+    data = DataProcessor.from_pcap('tests/test.pcap')
+    assert isinstance(data, pd.DataFrame)
 
-    def tearDown(self):
-        db.session.remove()
-        db.drop_all()
+def test_from_csv():
+    data = DataProcessor.from_csv('tests/test.csv')
+    assert isinstance(data, pd.DataFrame)
 
-    def test_start_analysis(self):
-        response = self.client.post('/start')
-        self.assertEqual(response.status_code, 200)
-
-    def test_stop_analysis(self):
-        response = self.client.post('/stop')
-        self.assertEqual(response.status_code, 200)
-
-    def test_get_status(self):
-        response = self.client.get('/status')
-        self.assertEqual(response.status_code, 200)
-
-    def test_get_results(self):
-        response = self.client.get('/results')
-        self.assertEqual(response.status_code, 200)
-
-if __name__ == '__main__':
-    unittest.main()
+def test_from_json():
+    data = DataProcessor.from_json('tests/test.json')
+    assert isinstance(data, pd.DataFrame)
